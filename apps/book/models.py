@@ -8,15 +8,30 @@ from utils.common import BaseModel
 from apps.account.models import Account
 
 
-# 图书类别
-class BookType(BaseModel):
+# 图书二级分类表格
+
+class BookRootType(BaseModel):
 	# ID:主键
 	name = models.CharField(verbose_name='类别', max_length=10)
 	is_active = models.BooleanField(verbose_name='假删除', default=True)
 
 	class Meta:
+		db_table = "book_root_type"
+		verbose_name = "图书一级分类"
+		verbose_name_plural = verbose_name
+
+	def __str__(self):
+		return self.name
+class BookType(BaseModel):
+	# ID:主键
+	name = models.CharField(verbose_name='类别', max_length=10)
+	is_active = models.BooleanField(verbose_name='假删除', default=True)
+	models.ForeignKey(BookRootType, verbose_name='图书一级分类', related_name='second_type', on_delete=models.CASCADE)
+
+
+	class Meta:
 		db_table = "book_type"
-		verbose_name = "图书分类"
+		verbose_name = "图书二级分类"
 		verbose_name_plural = verbose_name
 
 	def __str__(self):
