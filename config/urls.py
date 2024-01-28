@@ -6,7 +6,9 @@ from django.views.static import serve
 from rest_framework.routers import DefaultRouter
 from apps.account.views import *
 from apps.book.views import *
-
+from apps.image.views import ClubSwiperViewSet
+from utils.function import UploadViewSet
+from apps.notice.views import NoticetViewSet
 
 
 router = DefaultRouter()
@@ -18,8 +20,19 @@ router.register('borrow', BorrowViewSet, basename='borrow')
 
 #出版社
 router.register('press', PressViewSet, basename='press')
-#书籍类别
-router.register('category', BookCategoryViewSet, basename='category')
+#书籍一级类别
+router.register('category', BookRootCategoryViewSet, basename='category')
+
+# 首页轮播图
+router.register('swiper', ClubSwiperViewSet, basename='swiper')
+
+# 通知接口
+router.register('notice', NoticetViewSet, basename='swiper')
+
+#上传图片接口
+# 富文本图片上传url
+router.register('upload', viewset=UploadViewSet, basename='upload')
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),

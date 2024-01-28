@@ -40,8 +40,11 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_extensions',
     'django_crontab',  # 用于定时任务
+    #自定义app
     'apps.account',
-    'apps.book'
+    'apps.book',
+    'apps.image',
+    'apps.notice'
 ]
 
 MIDDLEWARE = [
@@ -222,7 +225,7 @@ FIXTURE_DIRS = [str(ROOT_DIR.path("fixtures"))]
 #配置url存放路径
 ROOT_URLCONF = 'config.urls'
 
-IMAGE_URL = 'http://192.168.219.1:8000/media/'
+IMAGE_URL = 'http://192.168.137.1:8000/media/'
 
 ALLOWED_HOSTS = ['*']
 

@@ -26,7 +26,7 @@ class BookType(BaseModel):
 	# ID:主键
 	name = models.CharField(verbose_name='类别', max_length=10)
 	is_active = models.BooleanField(verbose_name='假删除', default=True)
-	models.ForeignKey(BookRootType, verbose_name='图书一级分类', related_name='second_type', on_delete=models.CASCADE)
+	root_type=models.ForeignKey(BookRootType, verbose_name='图书一级分类', related_name='second_type', on_delete=models.CASCADE)
 
 
 	class Meta:
@@ -69,6 +69,8 @@ class Book(BaseModel):
 	version = models.IntegerField(verbose_name='版次', null=True, blank=True)
 	category = models.ManyToManyField(BookType, verbose_name='书籍分类', related_name='category_books')
 	stockNumber = models.IntegerField(verbose_name='馆藏数量', default=0)
+	checkedOutBooks = models.IntegerField(verbose_name='已借出图书数量', default=0)
+	bookLocation = models.CharField(verbose_name='藏书地址', max_length=40)
 	introduction = models.TextField(max_length=500, verbose_name='内容简介')
 	is_active = models.BooleanField(default=True, verbose_name='假删除')
 	press = models.ForeignKey(Press, verbose_name='出版社', related_name='books', on_delete=models.CASCADE)

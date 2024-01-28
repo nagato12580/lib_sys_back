@@ -21,12 +21,11 @@ from .serializers import *
 from .filters import *
 
 
-# 书籍分类视图
-class BookCategoryViewSet(viewsets.ModelViewSet):
-	queryset = BookType.objects.filter(is_active=True)
-	serializer_class = BookCategorySerializer
+# 书籍一级分类视图
+class BookRootCategoryViewSet(viewsets.ModelViewSet):
+	queryset = BookRootType.objects.filter(is_active=True)
+	serializer_class = BookRootCategorySerializer
 	pagination_class = Pagination
-
 	def destroy(self, request, *args, **kwargs):
 		instance = self.get_object()
 		instance.is_active = False
@@ -34,10 +33,12 @@ class BookCategoryViewSet(viewsets.ModelViewSet):
 		return Response(status=status.HTTP_204_NO_CONTENT)
 
 	@action(methods=['get'], detail=False, url_path='select')
-	def get_book_category(self, request):
-		queryset = self.get_queryset()
-		serializer = BookCategorySelectSerializer(queryset, many=True)
+	def get_book_second_category(self, request):
+		root_id=request.GET.get('root')
+		queryset = BookRootType.objects.select_related().filter(id=root_id,is_active=True)
+		serializer = BookRootCategorySelectSerializer(queryset, many=True)
 		return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 # 书籍视图
@@ -90,10 +91,10 @@ class BookViewSet(viewsets.ModelViewSet):
 		queryset = self.filter_queryset(self.get_queryset())
 		page = self.paginate_queryset(queryset)
 		if page is not None:
-			serializer = self.get_serializer(page, many=True)
+			serializer = BookListSerializer(page, many=True)
 			return self.get_paginated_response(serializer.data)
 
-		serializer = self.get_serializer(queryset, many=True)
+		serializer = BookListSerializer(queryset, many=True)
 		return Response(serializer.data)
 
 	# #获取热门图书
@@ -167,9 +168,8 @@ class BorrowViewSet(viewsets.ModelViewSet):
 	#获取热门书籍排行榜
 	@action(methods=['get'], detail=False, url_path='get_popular')
 	def get_popular(self, request):
-
 		data=Borrow.objects.values('book_id').annotate(count=Count("id")).order_by('-count').values_list('book_id',flat=True)
-		queryset=Book.objects.filter(id__in=list(data))
+		queryset=Book.objects.filter(id__in=list(data),is_active=True)
 		queryset = self.filter_queryset(queryset)
 		page = self.paginate_queryset(queryset)
 		if page is not None:

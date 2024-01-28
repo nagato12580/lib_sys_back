@@ -1,6 +1,6 @@
 from rest_framework.pagination import PageNumberPagination
 from django.db import models
-
+from django.conf import settings
 
 class Pagination(PageNumberPagination):
     """ 分页设置 """
@@ -31,3 +31,12 @@ def process_view(request):
     csrf_token=request.META.get('CSRF_COOKIE')#获取请求头里的
     if csrf_token is None:
         return
+
+def get_openid(code):
+    """ 微信根据code 获取openid"""
+    url = f"https://api.weixin.qq.com/sns/jscode2session?appid={settings.APP_ID}&secret={settings.APP_SECRET}&js_code" \
+          f"={code}&grant_type=authorization_code"
+    result = requests.get(url)
+    res = json.loads(result.text)  # 得到的数据格式为：{'session_key': '', 'openid': ''}
+    openid = res.get('openid', None)
+    return openid

@@ -16,6 +16,7 @@ class PressFilter(django_filters.rest_framework.FilterSet):
 
 # 书籍过滤器
 class BookFilter(django_filters.rest_framework.FilterSet):
+	id=django_filters.CharFilter()
 	search_key = django_filters.CharFilter(method="filter_search_key")
 	press_id = django_filters.CharFilter()
 	category = django_filters.CharFilter(method='fllter_category')
@@ -31,7 +32,7 @@ class BookFilter(django_filters.rest_framework.FilterSet):
 
 	class Meta:
 		model = Book
-		fields = ['bookTitle', 'author', 'press_id', 'category']
+		fields = ['id','bookTitle', 'author', 'press_id', 'category']
 
 # class BorrowFilter(django_filters.rest_framework.FilterSet):
 # 	pressTitle = django_filters.CharFilter(field_name='pressTitle', lookup_expr='icontains')
