@@ -20,6 +20,7 @@ class BaseModel(models.Model):
         abstract = True
 
 
+
 class CustomError(Exception):
     """
     自定义异常，用于excel表，reason表示异常信息

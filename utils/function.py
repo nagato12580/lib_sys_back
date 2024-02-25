@@ -3,6 +3,7 @@ import os
 import random
 import time
 import datetime
+import string
 
 from django.conf import settings
 from django.http import JsonResponse
@@ -67,3 +68,13 @@ class UploadViewSet(GenericViewSet, mixins.CreateModelMixin):
                 fp.write(chunk)
         img_path = f'lib_system/{dir_name}/{new_file_name}'
         return Response({'data': img_path, 'file_name': new_file_name})
+
+#随机生成用户名
+def create_string_number(n):
+    """生成一串指定位数的字符+数组混合的字符串"""
+    m = random.randint(1, n)
+    a = "".join([str(random.randint(0, 9)) for _ in range(m)])
+    b = "".join([random.choice(string.ascii_letters) for _ in range(n - m)])
+    return ''.join(random.sample(list(a + b), n))
+
+

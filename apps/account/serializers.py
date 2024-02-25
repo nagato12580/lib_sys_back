@@ -3,10 +3,16 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import serializers, status
 from .models import Account
 
-class AccountSerialzier(serializers.ModelSerializer):
+class AccountSerializer(serializers.ModelSerializer):
+    password=serializers.CharField(write_only=True)
     class Meta:
         model = Account
         fields = '__all__'
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret['wx_photo'] = '{}{}'.format(settings.IMAGE_URL, instance.wx_photo)
+        return ret
 
 
 

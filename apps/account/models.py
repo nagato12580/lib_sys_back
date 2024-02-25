@@ -30,10 +30,9 @@ class UserManager(BaseUserManager):
 class Account(AbstractBaseUser, PermissionsMixin):
     telephone = models.CharField(verbose_name='手机号', max_length=20, null=True, blank=True)
     username = models.CharField(verbose_name='用户名', max_length=100, unique=True, null=False, blank=False)
-    student_num=models.CharField(verbose_name='学号', max_length=20, null=False, blank=False)
+    school_num=models.CharField(verbose_name='学号/工号', max_length=20, null=True, blank=True)
     openid = models.CharField(verbose_name='用户的openid', max_length=200, default='', db_index=True)
-    type = models.CharField(verbose_name='用户角色(学生或教师或校外人员)', max_length=50, default='')
-    faculty_code = models.CharField(verbose_name='院系代码', max_length=30, null=True)
+    type = models.CharField(verbose_name='用户角色(学生或教职工或校外人员)', max_length=50, default='')
     faculty_title = models.CharField(verbose_name='院系名', max_length=50, null=True)
     realname = models.CharField(verbose_name='姓名', max_length=50, null=True, blank=True)
     is_active = models.BooleanField(verbose_name='账号是否启用', default=True)
@@ -41,14 +40,12 @@ class Account(AbstractBaseUser, PermissionsMixin):
     can_login_system = models.BooleanField(verbose_name='是否能登陆系统', default=True)
     status = models.CharField(verbose_name='状态', max_length=50, default='')
     grade_name = models.CharField(verbose_name='所在年级名称', max_length=200, default='')
-    major_code = models.CharField(verbose_name='专业号', max_length=30, default='')
     major_title = models.CharField(verbose_name='专业名称', max_length=50, default='')
-    class_code = models.CharField(verbose_name='班级号', max_length=30, default='')
     class_title = models.CharField(verbose_name='班级名称', max_length=50, default='')
 
     wechat_code = models.CharField(verbose_name='微信号', max_length=200, null=True, blank=True)
     sex = models.CharField(verbose_name='性别', default='', null=True, blank=True, max_length=2)
-    wx_photo = models.CharField(verbose_name='微信头像', default='', null=True, blank=True, max_length=350)
+    wx_photo = models.CharField(verbose_name='微信头像', default='lib_system/wx_photo/216-20240224170703-defalt_avar.png', null=True, blank=True, max_length=350)
     photo = models.ImageField(verbose_name='头像', default='', upload_to='account_photo/')
 
     created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
@@ -80,12 +77,5 @@ class Account(AbstractBaseUser, PermissionsMixin):
         return False
 
 
-class MiniprogramAccount(BaseModel):
-    mini_program_openid = models.CharField(verbose_name='微信小程序用户的openid', max_length=100, db_index=True)
-    account = models.ForeignKey(Account, verbose_name='关联账号', on_delete=models.CASCADE)
 
-    class Meta:
-        db_table = 'mini_program_account'
-        verbose_name = '微信小程序用户'
-        verbose_name_plural = verbose_name
 

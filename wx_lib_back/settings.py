@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'apps.account',
     'apps.book',
     'apps.image',
-    'apps.notice'
+    'apps.notice',
+    'apps.school',
 ]
 
 MIDDLEWARE = [
@@ -225,7 +226,7 @@ FIXTURE_DIRS = [str(ROOT_DIR.path("fixtures"))]
 #配置url存放路径
 ROOT_URLCONF = 'config.urls'
 
-IMAGE_URL = 'http://192.168.137.1:8000/media/'
+IMAGE_URL = 'http://192.168.1.108:8000/media/'
 
 ALLOWED_HOSTS = ['*']
 

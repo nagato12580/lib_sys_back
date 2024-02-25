@@ -145,3 +145,9 @@ class PopularListSerializer(serializers.ModelSerializer):
 		ret = super().to_representation(instance)
 		ret['image']='{}{}'.format(settings.IMAGE_URL, instance.image)
 		return ret
+
+#图书收藏序列化器
+class BookCollectionSerializer(serializers.ModelSerializer):
+	class Meta:
+		model=BookCollection
+		fields = '__all__'

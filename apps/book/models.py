@@ -98,3 +98,12 @@ class Borrow(BaseModel):
 		db_table = "borrow"
 		verbose_name = "图书借阅"
 		verbose_name_plural = verbose_name
+
+class BookCollection(BaseModel):
+	user = models.ForeignKey(Account, verbose_name='借阅人', related_name='star_book', on_delete=models.CASCADE)
+	book = models.ForeignKey(Book, verbose_name='借阅图书', related_name='star_user', on_delete=models.CASCADE)
+	is_active=models.BooleanField(default=True)
+	class Meta:
+		db_table = "collection"
+		verbose_name = "图书收藏"
+		verbose_name_plural = verbose_name

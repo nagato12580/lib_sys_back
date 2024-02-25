@@ -33,12 +33,18 @@ router.register('notice', NoticetViewSet, basename='swiper')
 # 富文本图片上传url
 router.register('upload', viewset=UploadViewSet, basename='upload')
 
+# 用户信息接口
+router.register('account', viewset=AccountViewSet, basename='account')
+
+#图书收藏接口
+router.register('collection', viewset=BookCollectionViewSet, basename='collection')
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
     url(r'media/(?P<path>.*)$', serve, {"document_root": settings.MEDIA_ROOT}),
-
+    path('mini_login/', WechatLoginView.as_view()),
 
     path('api/', include(router.urls)),
     path('login', LoginView.as_view()),

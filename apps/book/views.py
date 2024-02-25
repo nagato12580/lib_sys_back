@@ -7,7 +7,7 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 from django.db import transaction
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import F, Q
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
@@ -16,7 +16,8 @@ from rest_framework.response import Response
 from rest_framework import viewsets, mixins
 from utils.common import Pagination
 
-from .models import Press, BookType, Book
+from django.db.models import Case, When, Value, IntegerField
+from .models import Press, BookType, Book,BookCollection
 from .serializers import *
 from .filters import *
 
@@ -177,3 +178,87 @@ class BorrowViewSet(viewsets.ModelViewSet):
 			return self.get_paginated_response(serializer.data)
 		serializer = PopularListSerializer(queryset, many=True, context={'request': request})
 		return Response(serializer.data)
+
+class BookCollectionViewSet(viewsets.ModelViewSet):
+	queryset = BookCollection.objects.all()
+	serializer_class = BookCollectionSerializer
+	filter_backends = (OrderingFilter, DjangoFilterBackend)
+	# filter_class = PressFilter
+	pagination_class = Pagination
+
+	#新增收藏
+	def create(self, request, *args, **kwargs):
+		user = request.user
+		book_id = request.data.get('book_id')
+		if  not user.id:
+			return Response({'message':'请先登录'},status=status.HTTP_400_BAD_REQUEST)
+		collection=BookCollection.objects.filter(user=user,book_id=book_id)
+		if not collection:
+			BookCollection.objects.create(user=user,book_id=book_id)
+			return Response({'isStar':True},status=status.HTTP_200_OK)
+		else:
+			collection.update(is_active=True)
+			return Response({'isStar': True}, status=status.HTTP_200_OK)
+
+	#获取当前图书收藏状态
+	@action(methods=['get'], detail=False, url_path='get_status')
+	def get_status(self, request):
+		user = request.user
+		book_id = request.GET.get('book_id')
+		if not user.id:
+			return Response({'message':'请先登录'},status=status.HTTP_400_BAD_REQUEST)
+		collection=BookCollection.objects.filter(user=user,book_id=book_id,is_active=True)
+		if collection:
+			return Response({'isStar':True},status=status.HTTP_200_OK)
+		else:
+			return Response({'isStar':False},status=status.HTTP_200_OK)
+
+	#取消收藏
+	@action(methods=['post'], detail=False, url_path='cancel')
+	def cancel(self, request):
+		user = request.user
+		book_id = request.data.get('book_id')
+		if not user.id:
+			return Response({'message':'请先登录'},status=status.HTTP_400_BAD_REQUEST)
+		collection=BookCollection.objects.filter(user=user,book_id=book_id,is_active=True)
+		if collection:
+			BookCollection.objects.filter(user=user,book_id=book_id,is_active=True).update(is_active=False)
+			return Response({'isStar':False},status=status.HTTP_200_OK)
+		else:
+			return Response({'isStar':True},status=status.HTTP_200_OK)
+
+
+	#查看我的收藏列表
+	def list(self, request, *args, **kwargs):
+		user = request.user
+		if not user.id:
+			return Response({'message':'请先登录'},status=status.HTTP_400_BAD_REQUEST)
+		book_list = list(BookCollection.objects.filter(user=user,is_active=True).order_by('updated_time').values_list('book_id',flat=True))
+		#按照list位置顺序进行排序
+		queryset = Book.objects.filter(id__in=book_list).annotate(
+			custom_sort=Case(
+        *[When(id=value, then=pos) for pos, value in enumerate(book_list, start=1)],
+        default=IntegerField()
+    )
+).order_by('custom_sort')
+
+		page = self.paginate_queryset(queryset)
+		if page is not None:
+			serializer = BookListSerializer(page, many=True)
+			return self.get_paginated_response(serializer.data)
+		serializer = BookListSerializer(queryset, many=True)
+		return Response(serializer.data)
+
+
+
+		queryset = self.filter_queryset(self.get_queryset())
+		page = self.paginate_queryset(queryset)
+		if page is not None:
+			serializer = self.get_serializer(page, many=True)
+			return self.get_paginated_response(serializer.data)
+
+		serializer = self.get_serializer(queryset, many=True)
+		return Response(serializer.data)
+
+
+
