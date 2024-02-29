@@ -9,6 +9,7 @@ from apps.book.views import *
 from apps.image.views import ClubSwiperViewSet
 from utils.function import UploadViewSet
 from apps.notice.views import NoticetViewSet
+from apps.school.views import FacultyViewSet,MajorViewSet
 
 
 router = DefaultRouter()
@@ -39,6 +40,9 @@ router.register('account', viewset=AccountViewSet, basename='account')
 #图书收藏接口
 router.register('collection', viewset=BookCollectionViewSet, basename='collection')
 
+#学院、班级接口
+router.register('faculty', viewset=FacultyViewSet, basename='faculty')
+router.register('major', viewset=MajorViewSet, basename='major')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

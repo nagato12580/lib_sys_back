@@ -163,6 +163,26 @@ class AccountViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    @action(methods=['post'], detail=False, url_path='comfirm_info')
+    def comfirm_info(self, request):
+        user_id=request.user.id
+        myFacult = request.data.get('myFacult', '')
+        myGrade=request.data.get('myGrade', '')
+        myMajor=request.data.get('myMajor', '')
+        realName=request.data.get('realName', '')
+        telephone=request.data.get('telephone', '')
+        if not all([myFacult, myGrade,myMajor,realName,telephone]):
+            return Response({'message': '缺少参数'}, status=status.HTTP_400_BAD_REQUEST)
+        #更新信息
+        Account.objects.filter(id=user_id).update(
+            faculty_title=myFacult,
+            realname=realName,
+            telephone=telephone,
+            major_title=myMajor,
+            grade_name=myGrade
+        )
+        return Response(status=status.HTTP_200_OK)
+
 
 
 

@@ -3,7 +3,7 @@ from .models import *
 import time
 import random
 from django.conf import settings
-from datetime import date
+from datetime import date,datetime,timedelta
 
 # 出版社序列化器
 class PressSerializer(serializers.ModelSerializer):
@@ -117,19 +117,23 @@ class BookCategorySelectSerializer(serializers.ModelSerializer):
 
 class BorrowSerializer(serializers.ModelSerializer):
 	user=serializers.CharField(read_only=True)#只读，序列化时候无需验证
+	return_data=serializers.CharField(read_only=True)
 
 	def create(self, validated_data):
 		return Borrow.objects.create(**validated_data)
 
 	def validate(self, attrs):
-		#验证归还日期
-		if attrs['return_data']:
-			today=date.today()
-			if attrs['return_data'] <= today:
-				raise serializers.ValidationError(detail="归还日期不能早于今天")
-			d=attrs['return_data']-today
-			if d.days>90:
-				raise serializers.ValidationError(detail="借阅天数不得大于90天")
+		#设置归还日期
+		today = date.today()
+		attrs['return_data']=today+timedelta(days=90)
+		#更新图书数据
+		# if attrs['return_data']:
+		# 	today=date.today()
+		# 	if attrs['return_data'] <= today:
+		# 		raise serializers.ValidationError(detail="归还日期不能早于今天")
+		# 	d=attrs['return_data']-today
+		# 	if d.days>90:
+		# 		raise serializers.ValidationError(detail="借阅天数不得大于90天")
 		return attrs
 	class Meta:
 		model = Borrow

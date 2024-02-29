@@ -148,12 +148,18 @@ class BorrowViewSet(viewsets.ModelViewSet):
 
 	def create(self, request, *args, **kwargs):
 		new_data = request.data.copy()
+		book_id=request.data.get('book')
 		user_id=request.user.id
 		serializer = self.get_serializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
 		serializer.save(user_id=user_id)
-		headers = self.get_success_headers(serializer.data)
-		return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+		book=Book.objects.get(id=book_id)
+		#不够借
+		if book.stockNumber-book.checkedOutBooks<=0:
+			return Response(status=status.HTTP_400_BAD_REQUEST)
+		book.checkedOutBooks=book.checkedOutBooks+1
+		book.save()
+		return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 	def list(self, request, *args, **kwargs):
