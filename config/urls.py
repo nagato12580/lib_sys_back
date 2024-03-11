@@ -11,6 +11,7 @@ from utils.function import UploadViewSet
 from apps.notice.views import NoticetViewSet
 from apps.school.views import FacultyViewSet,MajorViewSet
 from apps.message.views import BookMessageThemeViewSet,CommentViewSet,MpttCommentViewSet
+from apps.reservation.views import SeatViewSet,ReservationViewSet
 
 
 router = DefaultRouter()
@@ -50,6 +51,11 @@ router.register('message', viewset=BookMessageThemeViewSet, basename='message')
 #留言评论相关接口
 router.register('comment', viewset=CommentViewSet, basename='comment')
 router.register('mptt_comment', viewset=MpttCommentViewSet, basename='mpttcomment')
+
+#座位预约相关接口
+#留言评论相关接口
+router.register('seat', viewset=SeatViewSet, basename='seat')
+router.register('reservation', viewset=ReservationViewSet, basename='reservation')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
