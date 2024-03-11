@@ -10,6 +10,7 @@ from apps.image.views import ClubSwiperViewSet
 from utils.function import UploadViewSet
 from apps.notice.views import NoticetViewSet
 from apps.school.views import FacultyViewSet,MajorViewSet
+from apps.message.views import BookMessageThemeViewSet,CommentViewSet,MpttCommentViewSet
 
 
 router = DefaultRouter()
@@ -44,12 +45,20 @@ router.register('collection', viewset=BookCollectionViewSet, basename='collectio
 router.register('faculty', viewset=FacultyViewSet, basename='faculty')
 router.register('major', viewset=MajorViewSet, basename='major')
 
+#留言相关接口
+router.register('message', viewset=BookMessageThemeViewSet, basename='message')
+#留言评论相关接口
+router.register('comment', viewset=CommentViewSet, basename='comment')
+router.register('mptt_comment', viewset=MpttCommentViewSet, basename='mpttcomment')
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
     url(r'media/(?P<path>.*)$', serve, {"document_root": settings.MEDIA_ROOT}),
     path('mini_login/', WechatLoginView.as_view()),
-
+    path('mptt_comment/', MpttCommentViewSet.as_view({
+        'post': 'create'
+    })),
     path('api/', include(router.urls)),
     path('login', LoginView.as_view()),
     # path('logout/', LogoutView.as_view()),
@@ -58,5 +67,6 @@ urlpatterns = [
     # path('check_account/', UsernameCountView.as_view()),
     # path('check_tel/', TelephoneCountView.as_view()),
     # path('images/', ImagesViewSet.as_view())
+
 ]
 

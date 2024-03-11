@@ -3,6 +3,7 @@ from django.db.models import Count
 # Create your views here.
 import json
 import uuid
+import datetime
 from django.conf import settings
 from django.forms.models import model_to_dict
 from django.db import transaction
@@ -98,6 +99,21 @@ class BookViewSet(viewsets.ModelViewSet):
 		serializer = BookListSerializer(queryset, many=True)
 		return Response(serializer.data)
 
+	@action(methods=['get'], detail=False, url_path='search')
+	def search(self, request, *args, **kwargs):
+		key=request.GET.get("value",'')
+		if not key:
+			return Response([],status.HTTP_204_NO_CONTENT)
+		else:
+			queryset=Book.objects.filter(Q(bookTitle__icontains=key) | Q(author__icontains=key))
+			page = self.paginate_queryset(queryset)
+			if page is not None:
+				serializer = BookListSerializer(page, many=True)
+				return self.get_paginated_response(serializer.data)
+
+			serializer = BookListSerializer(queryset, many=True)
+			return Response(serializer.data)
+
 	# #获取热门图书
 	# @action(methods=['get'], detail=True, url_path='popular')
 	# def get_popular_book(self, request, pk=None):
@@ -146,6 +162,7 @@ class BorrowViewSet(viewsets.ModelViewSet):
 	# filter_class = PressFilter
 	pagination_class = Pagination
 
+	#借阅图书
 	def create(self, request, *args, **kwargs):
 		new_data = request.data.copy()
 		book_id=request.data.get('book')
@@ -161,6 +178,21 @@ class BorrowViewSet(viewsets.ModelViewSet):
 		book.save()
 		return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+	#归还图书
+	@action(methods=['post'], detail=False, url_path='returned')
+	def returned(self, request):
+		user = request.user
+		if not user.id:
+			return Response({'message': '请先登录'}, status=status.HTTP_400_BAD_REQUEST)
+		book_id=request.data.get('book_id')
+		# 获取当前日期
+		today = datetime.now().date()
+		#更新借阅信息
+		borrow=Borrow.objects.get(user=user,book_id=book_id,is_return=False)
+		borrow.is_return=True
+		borrow.total_return_data = today
+		borrow.save()
+		return Response(status=status.HTTP_200_OK)
 
 	def list(self, request, *args, **kwargs):
 		queryset = self.filter_queryset(self.get_queryset())
@@ -184,6 +216,56 @@ class BorrowViewSet(viewsets.ModelViewSet):
 			return self.get_paginated_response(serializer.data)
 		serializer = PopularListSerializer(queryset, many=True, context={'request': request})
 		return Response(serializer.data)
+
+	#查看我的借阅
+	@action(methods=['get'], detail=False, url_path='get_my_borrow')
+	def get_my_borrow(self, request):
+		user = request.user
+		if not user.id:
+			return Response({'message': '请先登录'}, status=status.HTTP_400_BAD_REQUEST)
+		#未归还图书
+		book_list_no = list(
+			Borrow.objects.select_related('book').filter(user=user,is_return=False).order_by('borrowing_date').values('book_id','book__ISBN','book__image','book__author',
+																									'book__bookTitle','book__introduction',
+																									'return_data','total_return_data',
+																									'borrowing_date'))
+		res_no=[]
+		item={}
+		for book in book_list_no:
+			item={
+				'id':book['book_id'],
+				'image':'{}{}'.format(settings.IMAGE_URL, book['book__image']),
+				'ISBN':book['book__ISBN'],
+				'bookTitle':book['book__bookTitle'],
+				'author': book['book__author'],
+				'introduction': book['book__introduction'],
+				'borrowing_date':book['borrowing_date'],
+				'return_data': book['return_data'],
+				'total_return_data': book['total_return_data'],
+			}
+			res_no.append(item)
+
+		#已归还图书
+		book_list = list(
+			Borrow.objects.select_related('book').filter(user=user,is_return=True).order_by('borrowing_date').values('book_id','book__image','book__author',
+																									'book__bookTitle','book__introduction',
+																									'return_data','total_return_data',
+																												   'borrowing_date'))
+		res=[]
+		for book in book_list:
+			item={
+				'id':book['book_id'],
+				'image':'{}{}'.format(settings.IMAGE_URL, book['book__image']),
+				'bookTitle':book['book__bookTitle'],
+				'author': book['book__author'],
+				'introduction': book['book__introduction'],
+				'borrowing_date': book['borrowing_date'],
+				'return_data': book['return_data'],
+				'total_return_data': book['total_return_data'],
+			}
+			res.append(item)
+		return Response({'no_returned':res_no,'returned':res},status=status.HTTP_200_OK)
+
 
 class BookCollectionViewSet(viewsets.ModelViewSet):
 	queryset = BookCollection.objects.all()
@@ -254,9 +336,6 @@ class BookCollectionViewSet(viewsets.ModelViewSet):
 			return self.get_paginated_response(serializer.data)
 		serializer = BookListSerializer(queryset, many=True)
 		return Response(serializer.data)
-
-
-
 		queryset = self.filter_queryset(self.get_queryset())
 		page = self.paginate_queryset(queryset)
 		if page is not None:

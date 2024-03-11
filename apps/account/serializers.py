@@ -8,7 +8,6 @@ class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = '__all__'
-
     def to_representation(self, instance):
         ret = super().to_representation(instance)
         ret['wx_photo'] = '{}{}'.format(settings.IMAGE_URL, instance.wx_photo)

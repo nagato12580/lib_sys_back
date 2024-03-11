@@ -92,6 +92,7 @@ class Borrow(BaseModel):
 	user= models.ForeignKey(Account, verbose_name='借阅人', related_name='books', on_delete=models.CASCADE)
 	book=models.ForeignKey(Book,verbose_name='借阅图书', related_name='users', on_delete=models.CASCADE)
 	is_return=models.BooleanField(default=False, verbose_name='是否归还')
+	borrowing_date = models.DateField(verbose_name='借阅日期', auto_now_add = True) #第一次创建时设置日期
 	return_data=models.DateField(verbose_name='预计归还日期',null=False,blank=False)
 	total_return_data = models.DateField(verbose_name='实际归还日期',null=True,blank=True)
 	class Meta:
