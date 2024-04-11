@@ -8,6 +8,7 @@ class Notice(BaseModel):
     title = models.CharField(verbose_name='公告标题', max_length=100)
     content = models.TextField(verbose_name='公告内容')
     file = models.JSONField(verbose_name='公告文件',blank=True,null=True)
+    notice_file=models.FileField(verbose_name='公告文件',blank=True,null=True,upload_to='lib_system/notice_file')
     account = models.ForeignKey(Account, verbose_name='申请人', related_name='account_notice',
                                 null=True, blank=True, on_delete=models.CASCADE)
     is_active = models.BooleanField(verbose_name='是否启用', default=True)

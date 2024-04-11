@@ -41,7 +41,7 @@ class BookType(BaseModel):
 # 出版社
 class Press(BaseModel):
 	# ID:主键
-	pressNo = models.CharField(verbose_name='出版社编号', max_length=12, unique=True, editable=False)
+	# pressNo = models.CharField(verbose_name='出版社编号', max_length=12, unique=True, editable=False)
 	pressTitle = models.CharField(verbose_name='出版社名称', max_length=40)
 	address = models.CharField(verbose_name='出版社地址', max_length=40)
 	zipCode = models.CharField(verbose_name='邮政编码', max_length=6)

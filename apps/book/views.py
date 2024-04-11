@@ -90,12 +90,24 @@ class BookViewSet(viewsets.ModelViewSet):
 
 
 	def list(self, request, *args, **kwargs):
-		queryset = self.filter_queryset(self.get_queryset())
+		queryset = self.filter_queryset(self.get_queryset().order_by('-created_time'))
 		page = self.paginate_queryset(queryset)
 		if page is not None:
 			serializer = BookListSerializer(page, many=True)
 			return self.get_paginated_response(serializer.data)
 
+		serializer = BookListSerializer(queryset, many=True)
+		return Response(serializer.data)
+
+	#获取新上架图书排行榜
+	@action(methods=['get'], detail=False, url_path='get_new_book')
+	def get_new_book(self, request):
+		queryset=Book.objects.filter(is_active=True).order_by('-created_time')
+		queryset = self.filter_queryset(queryset)
+		page = self.paginate_queryset(queryset)
+		if page is not None:
+			serializer = BookListSerializer(page, many=True)
+			return self.get_paginated_response(serializer.data)
 		serializer = BookListSerializer(queryset, many=True)
 		return Response(serializer.data)
 
@@ -188,10 +200,15 @@ class BorrowViewSet(viewsets.ModelViewSet):
 		# 获取当前日期
 		today = datetime.now().date()
 		#更新借阅信息
-		borrow=Borrow.objects.get(user=user,book_id=book_id,is_return=False)
+		book=Book.objects.get(id=book_id)
+		borrow=Borrow.objects.get(user=user,book=book,is_return=False)
 		borrow.is_return=True
 		borrow.total_return_data = today
 		borrow.save()
+		#更新图书馆藏信息
+		checkedOutBooks=book.checkedOutBooks
+		book.checkedOutBooks=checkedOutBooks-1
+		book.save()
 		return Response(status=status.HTTP_200_OK)
 
 	def list(self, request, *args, **kwargs):
@@ -216,6 +233,7 @@ class BorrowViewSet(viewsets.ModelViewSet):
 			return self.get_paginated_response(serializer.data)
 		serializer = PopularListSerializer(queryset, many=True, context={'request': request})
 		return Response(serializer.data)
+
 
 	#查看我的借阅
 	@action(methods=['get'], detail=False, url_path='get_my_borrow')

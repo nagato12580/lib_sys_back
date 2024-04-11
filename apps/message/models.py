@@ -20,7 +20,11 @@ class Meta:
     verbose_name = "图书留言主题"
     verbose_name_plural = verbose_name
 
+def __str__(self):
+    return self.title
 
+
+#已废弃
 class Comment(BaseModel):  # 定义评论模型
     message = models.ForeignKey(to=BookMessageTheme, on_delete=models.DO_NOTHING, verbose_name='评论文章',related_name='all_comments')
     comment_content = models.TextField(verbose_name='评论内容')
@@ -36,7 +40,7 @@ class Comment(BaseModel):  # 定义评论模型
 
 
 class MpttComment(MPTTModel):  # 定义评论模型
-    message = models.ForeignKey(to=BookMessageTheme, on_delete=models.DO_NOTHING, verbose_name='评论文章',related_name='all_mptt_comments')
+    message = models.ForeignKey(to=BookMessageTheme, on_delete=models.CASCADE, verbose_name='评论文章',related_name='all_mptt_comments')
     comment_content = models.TextField(verbose_name='评论内容')
     is_active = models.BooleanField(default=True)
     comment_user = models.ForeignKey(to=Account, on_delete=models.DO_NOTHING, verbose_name='评论者',related_name='user_mptt_comments')

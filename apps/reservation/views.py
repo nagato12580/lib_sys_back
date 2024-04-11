@@ -10,7 +10,9 @@ from .serializers import ReservationSerializer,SeatSerializer
 from .models import Reservation,Seat
 from utils.common import Pagination
 from .filters import SeatFilter
+from datetime import datetime
 import copy
+from django.db.models import Count
 # Create your views here.
 lib_floor = {
     0: '负一楼',
@@ -36,7 +38,6 @@ reservation_period = {
     12:"20:00-21:00",
     13:"21:00-22:00",
     14:"22:00-23:00",
-
 }
 class SeatViewSet(ModelViewSet):
     '''社团公告视图'''
@@ -46,6 +47,26 @@ class SeatViewSet(ModelViewSet):
     filter_class = SeatFilter
     filter_backends = (OrderingFilter, DjangoFilterBackend)
     ordering_fields = ('id', 'created_time','floor')
+
+    @action(methods=['get'], detail=False, url_path='floor_overview')
+    def floor_overview(self, request, *args, **kwargs):
+        # 获取当前各楼座位使用情况
+        hour=request.GET.get('hour')
+        date=request.GET.get('date')
+        index=int(hour)-8
+        res=[100,100,100,100,100,100]
+        #获取各层座位总数
+        seat_counts = list(Seat.objects.filter(is_active=True).values('floor').annotate(count=Count('floor')))
+        #获取各层座位使用数
+        used_counts=list(Reservation.objects.select_related('seat').filter(is_active=True,period=index,appointment_date=date).values('seat__floor').annotate(count=Count('seat__floor')))
+        for item in seat_counts:
+            for used_item in used_counts:
+                if(item['floor']==used_item['seat__floor']):
+                    res[item['floor']]=100-int((used_item['count']/item['count'])*100)
+        return Response({'res': res}, status=status.HTTP_200_OK)
+
+
+
 
     @action(methods=['get'], detail=False, url_path='floor_seat')
     def floor_seat(self, request, *args, **kwargs):
@@ -77,8 +98,6 @@ class SeatViewSet(ModelViewSet):
                     grouped_data[seat_id] = []
                 grouped_data[seat_id].append(period)
 
-
-
             for seat in seat_list:
                 used_list=grouped_data.get(seat['id'],'')
                 initial_array = [1] * 15
@@ -94,7 +113,6 @@ class SeatViewSet(ModelViewSet):
 
 
 class ReservationViewSet(ModelViewSet):
-    '''社团公告视图'''
     queryset = Reservation.objects.filter(is_active=True)
     serializer_class = ReservationSerializer
     pagination_class = Pagination
@@ -109,4 +127,67 @@ class ReservationViewSet(ModelViewSet):
         for index in time_list:
             Reservation.objects.create(user_id=user_id,seat_id=seat_id,period=index,appointment_date=appointment_date)
         return Response(status=status.HTTP_200_OK)
+    @action(methods=['get'], detail=False, url_path='my_reservation')
+    def my_reservation(self, request, *args, **kwargs):
+
+        user=request.user
+        appointment_date=request.GET.get('appointment_date','')
+        if not all([user]):
+            return Response({'message':'未登录'}, status=status.HTTP_400_BAD_REQUEST)
+        #获取未使用的座位列表
+        data=list(Reservation.objects.select_related('seat').filter(user=user,is_active=True,use_time__isnull=True).order_by('period','-appointment_date').values('seat_id','seat__seat_number','seat__floor','period','appointment_date'))
+        result = {}
+        for item in data:
+            seat_id = item["seat_id"]
+            seat_number=item['seat__seat_number']
+            appointment_date=item["appointment_date"]
+            period = reservation_period[item["period"]]
+            period_id=item["period"]
+            floor = lib_floor[item['seat__floor']]
+            if  appointment_date in result:
+                result[appointment_date]["period"].append(period)
+                result[appointment_date]["period_id"].append(period_id)
+            else:
+                result[appointment_date] = {"seat_id": seat_id,"seat_number" :seat_number,"period": [period],"period_id":[period_id],"floor":floor,"appointment_date":appointment_date}
+
+        no_used_seat = list(result.values())
+
+        return Response({'no_used_seat':no_used_seat},status=status.HTTP_200_OK)
+
+    @action(methods=['post'], detail=False, url_path='cancel_reservation')
+    def cancel_reservation(self, request, *args, **kwargs):
+        user=request.user
+        seat_id=request.data.get('seat_id','')
+        period_ids=request.data.get('period_ids',[])
+        appointment_date=request.data.get('appointment_date','')
+        if not all([user, appointment_date,seat_id,period_ids]):
+            return Response({'message':'参数错误'}, status=status.HTTP_400_BAD_REQUEST)
+        #更新
+        try:
+            instance = Reservation.objects.filter(user=user,seat_id=seat_id,period__in=period_ids,appointment_date=appointment_date,is_active=True).update(is_active=False)
+        except Reservation.DoesNotExist:
+            return Response({'message': '错误的参数'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message':'取消成功'},status=status.HTTP_200_OK)
+
+    @action(methods=['post'], detail=False, url_path='use_reservation')
+    def use_reservation(self, request, *args, **kwargs):
+        user=request.user
+        seat_id=request.data.get('seat_id','')
+        period_id=request.data.get('period_id','')
+        appointment_date=request.data.get('appointment_date','')
+        if not all([user, appointment_date,seat_id,period_id]):
+            return Response({'message':'参数错误'}, status=status.HTTP_400_BAD_REQUEST)
+        # 获取当前日期和时间
+        current_datetime = datetime.now()
+        #更新
+        try:
+            instance = Reservation.objects.get(user=user,seat_id=seat_id,period=period_id,appointment_date=appointment_date,is_active=True,use_time__isnull=True)
+        except Reservation.DoesNotExist:
+            return Response({'message': '错误的参数'}, status=status.HTTP_400_BAD_REQUEST)
+        instance.use_time=current_datetime
+        instance.save()
+        return Response({'message':'操作成功'},status=status.HTTP_200_OK)
+
+
+
 

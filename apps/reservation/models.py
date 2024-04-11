@@ -29,12 +29,14 @@ reservation_period = {
 }
 class Seat(BaseModel):
     seat_number = models.CharField(verbose_name='座位编号', max_length=20)
-    floor = models.PositiveIntegerField(verbose_name='楼层（数据字典中的lib_floor）', default=1)
+    floor = models.PositiveIntegerField(verbose_name='楼层（数据字典中的lib_floor,0表负一楼，以此类推）', default=1)
     is_active = models.BooleanField(verbose_name='是否启用', default=True)
     class Meta:
         db_table = "seat"
         verbose_name = "座位表"
         verbose_name_plural = verbose_name
+    def __str__(self):
+        return self.seat_number
 
 class Reservation(BaseModel):
     seat = models.ForeignKey(Seat, verbose_name='预约座位', related_name='seat_reservation',
@@ -42,9 +44,10 @@ class Reservation(BaseModel):
     user = models.ForeignKey(Account, verbose_name='预约人', related_name='account_reservation',
                              on_delete=models.CASCADE)
     is_active = models.BooleanField(verbose_name='是否启用', default=True)
-    period = models.PositiveIntegerField(verbose_name='楼层（数据字典中的reservation_period）')
+    period = models.PositiveIntegerField(verbose_name='时间段（数据字典中的reservation_period，数值为当前小时-8）')
     appointment_date = models.DateField(verbose_name='预约日期')
     use_time = models.DateTimeField( verbose_name='使用时间', null=True)
+    use_time = models.DateTimeField(verbose_name='使用时间', null=True)
     class Meta:
         db_table = "reservation"
         verbose_name = "座位预约表"

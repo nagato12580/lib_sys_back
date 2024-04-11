@@ -28,6 +28,7 @@ DEBUG = True
 # Application definition
 
 INSTALLED_APPS = [
+    'simpleui',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -229,10 +230,14 @@ FIXTURE_DIRS = [str(ROOT_DIR.path("fixtures"))]
 #配置url存放路径
 ROOT_URLCONF = 'config.urls'
 
-IMAGE_URL = 'http://192.168.1.105:8000/media/'
+IMAGE_URL = 'http://192.168.138.36:8000/media/'
 
 ALLOWED_HOSTS = ['*']
 
 #小程序配置
 APP_ID = 'wxabdcbc533f95dbeb'
 APP_SECRET = '7a4cee37463d7cf9233cd2fa0502fffc'
+
+#SIMPLEui配置
+SIMPLEUI_HOME_TITLE = '数字图书馆后台管理系统'
+SIMPLEUI_HOME_INFO = False
