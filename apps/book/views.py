@@ -201,7 +201,7 @@ class BorrowViewSet(viewsets.ModelViewSet):
 		today = datetime.now().date()
 		#更新借阅信息
 		book=Book.objects.get(id=book_id)
-		borrow=Borrow.objects.get(user=user,book=book,is_return=False)
+		borrow=Borrow.objects.filter(user=user,book=book,is_return=False).first()
 		borrow.is_return=True
 		borrow.total_return_data = today
 		borrow.save()
@@ -340,6 +340,8 @@ class BookCollectionViewSet(viewsets.ModelViewSet):
 		if not user.id:
 			return Response({'message':'请先登录'},status=status.HTTP_400_BAD_REQUEST)
 		book_list = list(BookCollection.objects.filter(user=user,is_active=True).order_by('updated_time').values_list('book_id',flat=True))
+		if book_list==[]:
+			return Response()
 		#按照list位置顺序进行排序
 		queryset = Book.objects.filter(id__in=book_list).annotate(
 			custom_sort=Case(
@@ -354,14 +356,14 @@ class BookCollectionViewSet(viewsets.ModelViewSet):
 			return self.get_paginated_response(serializer.data)
 		serializer = BookListSerializer(queryset, many=True)
 		return Response(serializer.data)
-		queryset = self.filter_queryset(self.get_queryset())
-		page = self.paginate_queryset(queryset)
-		if page is not None:
-			serializer = self.get_serializer(page, many=True)
-			return self.get_paginated_response(serializer.data)
-
-		serializer = self.get_serializer(queryset, many=True)
-		return Response(serializer.data)
+		# queryset = self.filter_queryset(self.get_queryset())
+		# page = self.paginate_queryset(queryset)
+		# if page is not None:
+		# 	serializer = self.get_serializer(page, many=True)
+		# 	return self.get_paginated_response(serializer.data)
+		#
+		# serializer = self.get_serializer(queryset, many=True)
+		# return Response(serializer.data)
 
 
 

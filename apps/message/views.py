@@ -22,6 +22,14 @@ class BookMessageThemeViewSet(viewsets.ModelViewSet):
 	filter_class = BookMessageThemeFilter
 	filter_backends = (OrderingFilter, DjangoFilterBackend)
 
+	@action(methods=['post'], detail=False, url_path='delete')
+	def delete_theme(self, request):
+		message_id=request.data.get('message_id', '')
+		instance=BookMessageTheme.objects.get(id=message_id)
+		instance.is_active=False
+		instance.save()
+		return Response({'username': "删除成功！"}, status=status.HTTP_200_OK)
+
 class CommentViewSet(viewsets.ModelViewSet):
 	queryset = Comment.objects.filter(is_active=True)
 	serializer_class = CommentSerializer
@@ -47,6 +55,13 @@ class MpttCommentViewSet(viewsets.ModelViewSet):
 	pagination_class = Pagination
 	filter_class = MpttCommentFilter
 	filter_backends = (OrderingFilter, DjangoFilterBackend)
+	@action(methods=['post'], detail=False, url_path='delete')
+	def delete_comment(self, request):
+		comment_id=request.data.get('comment_id', '')
+		instance=MpttComment.objects.get(id=comment_id)
+		instance.is_active=False
+		instance.save()
+		return Response({'username': "删除成功！"}, status=status.HTTP_200_OK)
 
 	# def get_serializer_class(self):
 	# 	if self.action =='list':

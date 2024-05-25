@@ -11,6 +11,7 @@ from .models import Reservation,Seat
 from utils.common import Pagination
 from .filters import SeatFilter
 from datetime import datetime
+from collections import defaultdict
 import copy
 from django.db.models import Count
 # Create your views here.
@@ -124,6 +125,16 @@ class ReservationViewSet(ModelViewSet):
         seat_id = request.data.get('seat_id',[])
         time_list=request.data.get('time_list',[])
         appointment_date=request.data.get('appointment_date',[])
+        #查询预约日期当天该座位以被预约的时间段id
+        used_seat_period=list(Reservation.objects.filter(is_active=True,seat_id=seat_id,appointment_date=appointment_date).values_list('period',flat=True))
+        #获得两个列表的交集
+        intersection = list(set(time_list) & set(used_seat_period))
+        if intersection!=[]:
+            #构造出冲突的时间
+            res=[]
+            for item in intersection:
+                res.append(reservation_period.get(item))
+            return Response(status=status.HTTP_400_BAD_REQUEST,data=res)
         for index in time_list:
             Reservation.objects.create(user_id=user_id,seat_id=seat_id,period=index,appointment_date=appointment_date)
         return Response(status=status.HTTP_200_OK)
@@ -135,24 +146,27 @@ class ReservationViewSet(ModelViewSet):
         if not all([user]):
             return Response({'message':'未登录'}, status=status.HTTP_400_BAD_REQUEST)
         #获取未使用的座位列表
+        #获取分组
         data=list(Reservation.objects.select_related('seat').filter(user=user,is_active=True,use_time__isnull=True).order_by('period','-appointment_date').values('seat_id','seat__seat_number','seat__floor','period','appointment_date'))
-        result = {}
-        for item in data:
-            seat_id = item["seat_id"]
-            seat_number=item['seat__seat_number']
-            appointment_date=item["appointment_date"]
-            period = reservation_period[item["period"]]
-            period_id=item["period"]
-            floor = lib_floor[item['seat__floor']]
-            if  appointment_date in result:
-                result[appointment_date]["period"].append(period)
-                result[appointment_date]["period_id"].append(period_id)
-            else:
-                result[appointment_date] = {"seat_id": seat_id,"seat_number" :seat_number,"period": [period],"period_id":[period_id],"floor":floor,"appointment_date":appointment_date}
-
-        no_used_seat = list(result.values())
-
-        return Response({'no_used_seat':no_used_seat},status=status.HTTP_200_OK)
+        # 使用 defaultdict 来按照 'appointment_date' 和 'seat_id' 进行分组
+        grouped_data = defaultdict(lambda: defaultdict(list))
+        for entry in data:
+            grouped_data[entry['appointment_date']][entry['seat_id']].append(entry['period'])
+        # 将分组后的数据转换为所需的格式
+        formatted_data = []
+        for appointment_date, appointments in grouped_data.items():
+            for seat_id, periods in appointments.items():
+                formatted_periods = [reservation_period[period] for period in periods]
+                formatted_floor = lib_floor[data[0]['seat__floor']]  # 转换楼层信息
+                entry = {
+                    'appointment_date': appointment_date,
+                    'seat_id': seat_id,
+                    'floor': formatted_floor,  # 假设地板信息在所有数据中是相同的，可以根据实际情况修改
+                    'seat_number': Seat.objects.get(id=seat_id).seat_number,  # 同上
+                    'period': formatted_periods,
+                }
+                formatted_data.append(entry)
+        return Response({'no_used_seat':formatted_data},status=status.HTTP_200_OK)
 
     @action(methods=['post'], detail=False, url_path='cancel_reservation')
     def cancel_reservation(self, request, *args, **kwargs):

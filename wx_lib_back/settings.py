@@ -230,7 +230,7 @@ FIXTURE_DIRS = [str(ROOT_DIR.path("fixtures"))]
 #配置url存放路径
 ROOT_URLCONF = 'config.urls'
 
-IMAGE_URL = 'http://192.168.138.36:8000/media/'
+IMAGE_URL = 'http://192.168.137.1:8000/media/'
 
 ALLOWED_HOSTS = ['*']
 

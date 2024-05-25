@@ -68,7 +68,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('login', LoginView.as_view()),
     # path('logout/', LogoutView.as_view()),
-    path('refresh_token/', MyTokenRefreshView.as_view()),
+    # path('refresh_token/', MyTokenRefreshView.as_view()),
     path('register', RegisterViewSet.as_view({'post': 'create'})),
     # path('check_account/', UsernameCountView.as_view()),
     # path('check_tel/', TelephoneCountView.as_view()),

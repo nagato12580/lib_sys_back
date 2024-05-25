@@ -17,7 +17,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenViewBase
+# from rest_framework_simplejwt.views import TokenViewBase
 from apps.account.models import Account
 from .serializers import *
 from utils.function import create_string_number
@@ -79,7 +79,6 @@ class WechatLoginView(APIView):
         openid = get_openid(code)
         if not openid:
             return Response({'message': '请求微信服务器失败，请重试'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
         #获取用户
         user = Account.objects.filter(openid=openid)
         #用户不存在就创建一个用户
@@ -121,11 +120,11 @@ class RegisterViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin
 
 
 
-class MyTokenRefreshView(TokenViewBase):
-    """
-    自定义刷新token refresh: 刷新token的元素
-    """
-    serializer_class = CustomTokenRefreshSerializer
+# class MyTokenRefreshView(TokenViewBase):
+#     """
+#     自定义刷新token refresh: 刷新token的元素
+#     """
+#     serializer_class = CustomTokenRefreshSerializer
 
 
 class LogoutView(APIView):
@@ -182,6 +181,35 @@ class AccountViewSet(viewsets.ModelViewSet):
             grade_name=myGrade
         )
         return Response(status=status.HTTP_200_OK)
+
+    #用于检查资料是否完善
+    @action(methods=['get'], detail=False, url_path='check_userinfo')
+    def check_userinfo(self, request):
+        user = request.user
+        account_id=user.id
+        instance=Account.objects.get(id=account_id)
+
+        realname=instance.realname
+        telephone=instance.telephone
+        faculty_title=instance.faculty_title
+        grade_name=instance.grade_name
+        major_title=instance.major_title
+        if not all([realname, telephone,faculty_title,grade_name,major_title]):
+            return Response(status=status.HTTP_200_OK,data={"flage":False})
+        else:
+            return Response(status=status.HTTP_200_OK,data={"flage":True})
+
+    @action(methods=['get'], detail=False, url_path='check_login')
+    def check_login(self, request):
+        user = request.user
+        account_id=user.id
+        if account_id:
+            return Response(status=status.HTTP_200_OK, data={"isLogin": True})
+        else:
+            return Response(status=status.HTTP_200_OK, data={"isLogin": False})
+
+
+
 
 
 
